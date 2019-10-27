@@ -1,0 +1,5 @@
+version: STSv1
+mode: enforce
+mx: m.zi.is
+max_age: 86400
+

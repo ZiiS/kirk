@@ -1,0 +1,7 @@
+apiVersion: v1
+appVersion: "1.0"
+description: |
+  For some reason these prerequisits are not in main chart. From:
+  https://raw.githubusercontent.com/jetstack/cert-manager/release-0.11/deploy/manifests/00-crds.yaml
+name: cert-manager-crd
+version: 0.11.0
