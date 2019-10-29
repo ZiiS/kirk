@@ -57,7 +57,7 @@ providers:
     tsigKeyName: ${data.sops_file.rfc2136.data.tsigkeyname}
     tsigAlgorithm: HMACSHA512
     tsigSecretSecretRef:
-      name: rfc2136-secret
+      name: issuer-tsigkey
       key: tsigkey
 EOF
   ]
