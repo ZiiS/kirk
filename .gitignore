@@ -1,4 +1,3 @@
-*.pem
 terraform.tfstate
-terraform.tfstate.backup
+*.backup
 .terraform

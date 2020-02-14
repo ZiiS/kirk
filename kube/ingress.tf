@@ -2,17 +2,34 @@ data "sops_file" "rfc2136" {
   source_file = "${var.name}_rfc2136_secret.json"
 }
 
+resource "kubernetes_namespace" "cert-manager" {
+  metadata {
+    name = "cert-manager"
+  }
+}
+
 resource "helm_release" "cert-manager-crd" {
-  depends_on = ["kubernetes_cluster_role_binding.tiller"]
-  name       = "cert-manager-crd"
-  chart      = "./kube/cert-manager-crd"
+  name      = "cert-manager-crd"
+  namespace = kubernetes_namespace.cert-manager.metadata.0.name
+  chart     = "./kube/cert-manager-crd"
+}
+
+data "helm_repository" "stable" {
+  name = "stable"
+  url  = "https://kubernetes-charts.storage.googleapis.com"
+}
+
+data "helm_repository" "jetstack" {
+  name = "jetstack"
+  url  = "https://charts.jetstack.io"
 }
 
 resource "helm_release" "nginx-ingress" {
-  depends_on = ["kubernetes_cluster_role_binding.tiller"]
   name       = "nginx-ingress"
   namespace  = "nginx-ingress"
-  chart      = "stable/nginx-ingress"
+  repository = data.helm_repository.stable.metadata.0.name
+
+  chart = "nginx-ingress"
 
   values = [<<EOF
 controller:   
@@ -37,16 +54,17 @@ EOF
 }
 
 resource "helm_release" "cert-manager" {
-  depends_on = ["helm_release.cert-manager-crd"]
+  depends_on = [helm_release.cert-manager-crd]
   name       = "cert-manager"
-  namespace  = "cert-manager"
-  chart      = "jetstack/cert-manager"
+  namespace  = kubernetes_namespace.cert-manager.metadata.0.name
+  repository = data.helm_repository.jetstack.metadata.0.name
+  chart      = "cert-manager"
 }
 
 resource "helm_release" "issuer" {
-  depends_on = ["helm_release.cert-manager-crd"]
+  depends_on = [helm_release.cert-manager-crd]
   name       = "issuer"
-  namespace  = "cert-manager"
+  namespace  = kubernetes_namespace.cert-manager.metadata.0.name
   chart      = "./kube/issuer"
 
   values = [<<EOF
@@ -64,6 +82,6 @@ EOF
 
   set_sensitive {
     name  = "tsigkey"
-    value = "${base64encode(data.sops_file.rfc2136.data.tsigkey)}"
+    value = base64encode(data.sops_file.rfc2136.data.tsigkey)
   }
 }

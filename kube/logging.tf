@@ -1,15 +1,18 @@
 resource "helm_release" "elasticsearch" {
-  depends_on = ["kubernetes_cluster_role_binding.tiller"]
+  count      = 0
   name       = "elasticsearch"
   namespace  = "logging"
-  chart      = "stable/elasticsearch"
+  repository = data.helm_repository.stable.metadata.0.name
+
+  chart = "elasticsearch"
 }
 
 resource "helm_release" "fluentd-elasticsearch" {
-  depends_on = ["kubernetes_cluster_role_binding.tiller"]
+  count      = 0
   name       = "fluentd-elasticsearch"
   namespace  = "logging"
-  chart      = "stable/fluentd-elasticsearch"
+  repository = data.helm_repository.stable.metadata.0.name
+  chart      = "fluentd-elasticsearch"
 
   values = [<<EOF
 podAnnotations:
@@ -20,10 +23,11 @@ EOF
 }
 
 resource "helm_release" "kibana" {
-  depends_on = ["kubernetes_cluster_role_binding.tiller"]
+  count      = 0
   name       = "kibana"
   namespace  = "logging"
-  chart      = "stable/kibana"
+  repository = data.helm_repository.stable.metadata.0.name
+  chart      = "kibana"
 
   values = [<<EOF
 env:

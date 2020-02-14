@@ -3,9 +3,10 @@ data "sops_file" "sentry" {
 }
 
 resource "helm_release" "sentry" {
-  name       = replace(var.host, ".", "-")
-  namespace  = replace(var.host, ".", "-")
-  chart      = "stable/sentry"
+  count     = 0
+  name      = replace(var.host, ".", "-")
+  namespace = replace(var.host, ".", "-")
+  chart     = "stable/sentry"
   values = [<<EOF
 user:
   email: b@zi.is
@@ -25,17 +26,17 @@ ingress:
       - ${var.host}
       secretName: ${replace(var.host, ".", "-")}
 EOF
-]
+  ]
   set_sensitive {
     name  = "email.password"
     value = data.sops_file.sentry.data.emailPassword
-  }    
+  }
   set_sensitive {
     name  = "sentrySecret"
     value = data.sops_file.sentry.data.secret
-  }    
+  }
   set_sensitive {
     name  = "user.password"
     value = data.sops_file.sentry.data.userPassword
-  }    
+  }
 }

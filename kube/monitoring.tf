@@ -3,10 +3,11 @@ data "sops_file" "grafana" {
 }
 
 resource "helm_release" "prometheus" {
-  depends_on = ["kubernetes_cluster_role_binding.tiller"]
+  count      = 0
   name       = "prometheus"
   namespace  = "monitoring"
-  chart      = "stable/prometheus"
+  repository = data.helm_repository.stable.metadata.0.name
+  chart      = "prometheus"
 
   values = [<<EOF
 alertmanager:
@@ -18,10 +19,11 @@ EOF
 }
 
 resource "helm_release" "grafana" {
-  depends_on = ["kubernetes_cluster_role_binding.tiller"]
+  count      = 0
   name       = "grafana"
   namespace  = "monitoring"
-  chart      = "stable/grafana"
+  repository = data.helm_repository.stable.metadata.0.name
+  chart      = "grafana"
 
   values = [<<EOF
 datasources: 
@@ -73,6 +75,6 @@ EOF
 
   set_sensitive {
     name  = "adminPassword"
-    value = "${data.sops_file.grafana.data.adminPassword}"
+    value = data.sops_file.grafana.data.adminPassword
   }
 }
