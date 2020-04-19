@@ -1,5 +1,5 @@
 data "external" "folder" {
-  program = ["sh", "-c", "md5sum ${var.folder}/** | md5sum | cut -c-32 | jq -R {\"md5\":.}"]
+  program = ["sh", "-c", "md5sum ${var.folder}/** | grep -v tfstate | md5sum | cut -c-32 | jq -R {\"md5\":.}"]
 }
 
 resource "null_resource" "build" {

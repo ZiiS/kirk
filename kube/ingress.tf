@@ -24,20 +24,24 @@ data "helm_repository" "jetstack" {
   url  = "https://charts.jetstack.io"
 }
 
+resource "kubernetes_namespace" "nginx-ingress" {
+  metadata {
+    name = "nginx-ingress"
+  }
+}
+
 resource "helm_release" "nginx-ingress" {
   name       = "nginx-ingress"
-  namespace  = "nginx-ingress"
+  namespace  = kubernetes_namespace.nginx-ingress.metadata.0.name
   repository = data.helm_repository.stable.metadata.0.name
 
   chart = "nginx-ingress"
 
   values = [<<EOF
 controller:   
-  kind: DaemonSet
-  daemonset:
-    useHostPort: true
   service:
-    enabled: false
+    externalIPs:
+    - 178.32.25.16
   stats: 
     enabled: true 
   metrics:
