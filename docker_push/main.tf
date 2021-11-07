@@ -7,7 +7,7 @@ resource "null_resource" "build" {
     build_folder_md5 = data.external.folder.result.md5
   }
   provisioner "local-exec" {
-    command = "docker build ${var.folder} -t ${var.registry}/${var.image}:${data.external.folder.result.md5}"
+    command = "docker buildx build ${var.folder} -t ${var.registry}/${var.image}:${data.external.folder.result.md5}"
   }
 }
 

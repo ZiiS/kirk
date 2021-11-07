@@ -2,16 +2,20 @@ data "sops_file" "grafana" {
   source_file = "${var.name}_grafana_secret.json"
 }
 
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+}
+
 resource "helm_release" "prometheus" {
-  count      = 0
   name       = "prometheus"
-  namespace  = "monitoring"
-  repository = data.helm_repository.stable.metadata.0.name
+  namespace  = kubernetes_namespace.monitoring.metadata.0.name
   chart      = "prometheus"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  version    = "14.11.1"
 
   values = [<<EOF
-alertmanager:
-  enabled: false
 pushgateway:
   enabled: false
 EOF
@@ -19,11 +23,11 @@ EOF
 }
 
 resource "helm_release" "grafana" {
-  count      = 0
   name       = "grafana"
-  namespace  = "monitoring"
-  repository = data.helm_repository.stable.metadata.0.name
+  namespace  = kubernetes_namespace.monitoring.metadata.0.name
   chart      = "grafana"
+  repository = "https://grafana.github.io/helm-charts"
+  version    = "6.17.5"
 
   values = [<<EOF
 datasources: 

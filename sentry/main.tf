@@ -2,11 +2,19 @@ data "sops_file" "sentry" {
   source_file = "ziis_sentry_secret.json"
 }
 
+resource "kubernetes_namespace" "sentry" {
+  metadata {
+    name = replace(var.host, ".", "-")
+  }
+}
+
 resource "helm_release" "sentry" {
-  count     = 0
-  name      = replace(var.host, ".", "-")
-  namespace = replace(var.host, ".", "-")
-  chart     = "stable/sentry"
+  count      = 0
+  name       = replace(var.host, ".", "-")
+  namespace  = kubernetes_namespace.sentry.metadata.0.name
+  chart      = "sentry"
+  repository = "https://sentry-kubernetes.github.io/charts"
+  version    = "9.0.0"
   values = [<<EOF
 user:
   email: b@zi.is
@@ -25,6 +33,16 @@ ingress:
     - hosts:
       - ${var.host}
       secretName: ${replace(var.host, ".", "-")}
+sentry:
+  web:
+    env:
+    - name:  UWSGI_DISABLE_LOGGING
+      value: 'true'
+snuba:
+  api:
+    env:
+    - name:  UWSGI_DISABLE_LOGGING
+      value: 'true'
 EOF
   ]
   set_sensitive {

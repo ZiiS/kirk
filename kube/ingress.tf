@@ -8,20 +8,22 @@ resource "kubernetes_namespace" "cert-manager" {
   }
 }
 
+data "http" "cert-manager-crd" {
+    url = "https://github.com/jetstack/cert-manager/releases/download/v1.6.0/cert-manager.crds.yaml"
+}
+
+#resource "kubernetes_manifest" "test-configmap" {
+#  manifest = yamldecode(data.http.cert-manager-crd.body)
+#}
+
+resource "kubectl_manifest" "cert-manager-crd" {
+    yaml_body = data.http.cert-manager-crd.body
+}
+
 resource "helm_release" "cert-manager-crd" {
   name      = "cert-manager-crd"
   namespace = kubernetes_namespace.cert-manager.metadata.0.name
   chart     = "./kube/cert-manager-crd"
-}
-
-data "helm_repository" "stable" {
-  name = "stable"
-  url  = "https://kubernetes-charts.storage.googleapis.com"
-}
-
-data "helm_repository" "jetstack" {
-  name = "jetstack"
-  url  = "https://charts.jetstack.io"
 }
 
 resource "kubernetes_namespace" "nginx-ingress" {
@@ -31,25 +33,23 @@ resource "kubernetes_namespace" "nginx-ingress" {
 }
 
 resource "helm_release" "nginx-ingress" {
-  name       = "nginx-ingress"
-  namespace  = kubernetes_namespace.nginx-ingress.metadata.0.name
-  repository = data.helm_repository.stable.metadata.0.name
+  name      = "ingress-nginx"
+  namespace = kubernetes_namespace.nginx-ingress.metadata.0.name
 
-  chart = "nginx-ingress"
-
+  chart      = "ingress-nginx"
+  repository = "https://kubernetes.github.io/ingress-nginx"
+  version    = "4.0.6"
   values = [<<EOF
 controller:   
   service:
     externalIPs:
     - 178.32.25.16
-  stats: 
-    enabled: true 
   metrics:
     enabled: true
     service:   
       annotations:
-        prometheus.io/port: 10254
-        prometheus.io/scrape: true
+        prometheus.io/port: "10254"
+        prometheus.io/scrape: "true"
   config:
     ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
     hsts: "false"
@@ -61,8 +61,9 @@ resource "helm_release" "cert-manager" {
   depends_on = [helm_release.cert-manager-crd]
   name       = "cert-manager"
   namespace  = kubernetes_namespace.cert-manager.metadata.0.name
-  repository = data.helm_repository.jetstack.metadata.0.name
+  repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
+  version    = "v1.6.0"
 }
 
 resource "helm_release" "issuer" {

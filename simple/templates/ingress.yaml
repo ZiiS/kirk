@@ -1,7 +1,7 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Release.Name }}-1
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/issuer: issuer
@@ -16,6 +16,9 @@ spec:
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: {{ $.Release.Name }}
-          servicePort: http
+          service:
+            name: {{ $.Release.Name }}
+            port:
+              number: 80

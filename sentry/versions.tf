@@ -3,12 +3,9 @@ terraform {
     sops = {
       source = "carlpett/sops"
     }
-    kubectl = {
-     source = "gavinbunney/kubectl"
-    }
   }
 }
 
 terraform {
-  required_version = ">= 1"
+  required_version = ">= 0.14"
 }

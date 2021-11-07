@@ -1,8 +1,8 @@
 module "ziis" {
-  name   = "ziis"
-  source = "./kube"
+  name       = "ziis"
+  source     = "./kube"
   email      = "b@zi.is"
-  nameserver = "10.67.1.2"
+  nameserver = "178.32.25.19"
   registry   = "10.105.250.202"
 }
 module "sentry" {

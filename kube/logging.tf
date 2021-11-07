@@ -1,18 +1,29 @@
-resource "helm_release" "elasticsearch" {
-  count      = 0
-  name       = "elasticsearch"
-  namespace  = "logging"
-  repository = data.helm_repository.stable.metadata.0.name
-
-  chart = "elasticsearch"
+resource "kubernetes_namespace" "logging" {
+  metadata {
+    name = "logging"
+  }
 }
 
-resource "helm_release" "fluentd-elasticsearch" {
-  count      = 0
-  name       = "fluentd-elasticsearch"
-  namespace  = "logging"
-  repository = data.helm_repository.stable.metadata.0.name
-  chart      = "fluentd-elasticsearch"
+resource "helm_release" "elasticsearch" {
+  name      = "elasticsearch"
+  namespace = kubernetes_namespace.logging.metadata.0.name
+
+  chart      = "elasticsearch"
+  repository = "https://helm.elastic.co"
+  version    = "7.15.0"
+
+  values = [<<EOF
+antiAffinity: soft
+EOF
+  ]
+}
+
+resource "helm_release" "logstash" {
+  name       = "logstash"
+  namespace  = kubernetes_namespace.logging.metadata.0.name
+  chart      = "logstash"
+  repository = "https://helm.elastic.co"
+  version    = "7.15.0"
 
   values = [<<EOF
 podAnnotations:
@@ -23,11 +34,11 @@ EOF
 }
 
 resource "helm_release" "kibana" {
-  count      = 0
   name       = "kibana"
-  namespace  = "logging"
-  repository = data.helm_repository.stable.metadata.0.name
+  namespace  = kubernetes_namespace.logging.metadata.0.name
   chart      = "kibana"
+  repository = "https://helm.elastic.co"
+  version    = "7.15.0"
 
   values = [<<EOF
 env:
